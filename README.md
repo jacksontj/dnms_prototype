@@ -11,6 +11,7 @@ through an API
 ## Terms
 Peer: another server on the network
 
+NetworkGraph: graph of the entire network
 Route: a set of links
 NetworkNode: Router in the network-- something that should respond to traceroute
 Link: specific connection between 2 NetworkNodes
