@@ -18,6 +18,7 @@ class Link(object):
     def __repr__(self):
         return pprint.pformat(vars(self))
 
+
 class Route(object):
     def __init__(self, src_tup, dst_tup, route, links):
         self.src_tup = src_tup

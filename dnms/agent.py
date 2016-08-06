@@ -68,7 +68,8 @@ class DNMSAgent(object):
         self.ioloop = ioloop if ioloop is not None else tornado.ioloop.IOLoop.current()
 
         # TODO: config
-        self.port_range = (33434, 33437)
+        #self.port_range = (33434, 33437)
+        self.port_range = (33434, 33435)
 
         # TODO: config number of threads
         self.pool = concurrent.futures.ThreadPoolExecutor(5)
@@ -126,8 +127,11 @@ class DNMSAgent(object):
             x += 1
 
 
+    # TODO: configurable parallelism
     @tornado.gen.coroutine
     def traceroute_peers(self):
+        peer = Peer('www.google.com')
+        old_graph = None
         while True:
             peers = dict(self.peers)  # make a copy
 
@@ -135,8 +139,14 @@ class DNMSAgent(object):
             for peer_name, peer in peers.iteritems():
                 print 'tracing peer'
                 #yield self.traceroute_peer(peer)
-                yield self.traceroute_peer(Peer('www.google.com'))
+                yield self.traceroute_peer(peer)
                 yield tornado.gen.sleep(5)
+            new_graph = str(self.graph)
+            if old_graph != new_graph:
+                print new_graph
+                old_graph = new_graph
+            else:
+                print 'no change to graph'
 
     @tornado.gen.coroutine
     def traceroute_peer(self, peer):
@@ -150,11 +160,13 @@ class DNMSAgent(object):
                 3,  # TODO: config number of hops
                 src_port=port
             )
-            new_route = self.graph.add_route(
-                (self.local_peer.addr, port),
-                dst_addr,
-                raw_route,
-            )
-            peer.set_route(port, new_route)
-            print new_route
-            yield tornado.gen.sleep(5)
+            old_route = peer.get_route(port)
+
+            if (old_route is None or (old_route is not None and old_route.route != tuple(raw_route))):
+                new_route = self.graph.add_route(
+                    (self.local_peer.addr, port),
+                    dst_addr,
+                    raw_route,
+                )
+                peer.set_route(port, new_route)
+            yield tornado.gen.sleep(1)
