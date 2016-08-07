@@ -1,6 +1,8 @@
 import pprint
 
 
+# TODO: handle addr '*' -- to compensate maybe we can just use a compound of the
+# node on either side? so something like A -> * -> * -> B would become A*_B (for the second *)
 class NetworkNode(object):
     def __init__(self, addr):
         self.addr = addr
@@ -18,7 +20,8 @@ class Link(object):
     def __repr__(self):
         return pprint.pformat(vars(self))
 
-
+# TODO: TTL for routes? If we just start up we don't want to have to re-ping the
+# world before we are useful
 class Route(object):
     def __init__(self, src_tup, dst_tup, route, links):
         self.src_tup = src_tup
@@ -74,9 +77,8 @@ class NetworkGraph(object):
         return self.nodes[addr]
 
     def rm_node(self, addr):
-        # TODO: warning!
         if addr not in self.nodes:
-            return
+            raise Exception('Removing node {0} that is not in the graph'.format(addr))
         self.nodes[addr].count -= 1
         if self.nodes[addr].count == 0:
             del self.nodes[addr]
@@ -98,9 +100,8 @@ class NetworkGraph(object):
 
     def rm_link(self, src_addr, dst_addr):
         link_key = (src_addr, dst_addr)
-        # TODO: log warning!
         if link_key not in self.links:
-            return
+            raise Exception('Removing link {0} that is not in the graph'.format(link_key))
 
         link = self.links[link_key]
 
@@ -150,9 +151,8 @@ class NetworkGraph(object):
 
     def remove_route(self, src_tup, dst_tup, route):
         route_key = (src_tup, dst_tup)
-        # TODO: log warning!
         if route_key not in self.routes:
-            return
+            raise Exception('Removing route {0} that is not in the graph'.format(route_key))
 
         route = self.routes[route_key]
         # decrement all the links

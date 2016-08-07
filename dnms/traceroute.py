@@ -1,11 +1,4 @@
-#!/usr/bin/python
-
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
-
-import optparse
 import socket
-import sys
 
 
 def traceroute(dest_addr, dst_port, max_hops, src_port=None):
@@ -47,48 +40,3 @@ def traceroute(dest_addr, dst_port, max_hops, src_port=None):
             break
 
     return tuple(route)
-
-
-# TODO parallelize
-def all_routes(dest, start_port, end_port, max_hops):
-    '''
-    Map all possible routes to dest through the port ranges
-    '''
-    dest_addr = socket.gethostbyname(dest)
-    # TODO: check that end_port is after start_port, and within a reasonable range
-    # mapping of port -> route
-    routes = {}
-    # route -> ports
-    reverse_routes = {}
-    print 'mapping %s -> %s' % (start_port, end_port)
-    for port in xrange(start_port, end_port):
-        print 'mapping %s' % port
-        route = traceroute(dest_addr, port, max_hops, src_port=5555)
-        routes[port] = route
-        if route not in reverse_routes:
-            reverse_routes[route] = set()
-        reverse_routes[route].add(port)
-
-    pp.pprint(routes)
-    pp.pprint(reverse_routes)
-    return routes, reverse_routes
-
-
-if __name__ == "__main__":
-    parser = optparse.OptionParser(usage="%prog [options] hostname")
-    parser.add_option("-m", "--max-hops", dest="max_hops",
-                      help="Max hops before giving up [default: %default]",
-                      default=30, metavar="MAXHOPS")
-    options, args = parser.parse_args()
-    if len(args) != 1:
-        parser.error('')
-    else:
-        dest = args[0]
-    sys.exit(
-        all_routes(
-            dest=dest,
-            start_port=33434,
-            end_port=33437,
-            max_hops=int(options.max_hops),
-        ),
-    )

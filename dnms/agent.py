@@ -24,9 +24,7 @@ class Peer(object):
             self.addr = addr
 
         # map of route_object -> [ports]
-        self.route_port_map = {
-
-        }
+        self.route_port_map = {}
 
     # TODO: maintain maps both directions?
     def get_route(self, port):
@@ -57,6 +55,7 @@ class DNMSAgent(object):
     '''
 
     def __init__(self, ioloop=None):
+        # TODO: async persist graph to disk?
         self.graph = dnms.graph.NetworkGraph()
 
         # TODO: better determining the IP of `self`
@@ -77,8 +76,10 @@ class DNMSAgent(object):
     def start(self):
         self.started = True
 
+        # TODO: lock source ports? right now these 2 immediately conflict
         # start pinger
         #self.ioloop.spawn_callback(self.ping_peers)
+        # start traceroute
         self.ioloop.spawn_callback(self.traceroute_peers)
 
     # TODO: move into a peer-group class?
@@ -123,6 +124,8 @@ class DNMSAgent(object):
             took = time.time() - start
             print 'got a response', response
             print 'took', took
+            # TODO: do something with the response-- this data should be stored on
+            # the route-- probably a rolling window of ping responses (success/fail and latency)
             yield tornado.gen.sleep(1)
             x += 1
 
@@ -130,7 +133,6 @@ class DNMSAgent(object):
     # TODO: configurable parallelism
     @tornado.gen.coroutine
     def traceroute_peers(self):
-        peer = Peer('www.google.com')
         old_graph = None
         while True:
             peers = dict(self.peers)  # make a copy
@@ -138,8 +140,8 @@ class DNMSAgent(object):
             # TODO: shuffle order
             for peer_name, peer in peers.iteritems():
                 print 'tracing peer'
-                #yield self.traceroute_peer(peer)
                 yield self.traceroute_peer(peer)
+                # TODO: configurable sleep
                 yield tornado.gen.sleep(5)
             new_graph = str(self.graph)
             if old_graph != new_graph:
@@ -160,8 +162,10 @@ class DNMSAgent(object):
                 3,  # TODO: config number of hops
                 src_port=port
             )
+            # TODO: validate the new_route (since the traceroute could be broken)
             old_route = peer.get_route(port)
 
+            # if there wasn't a route before or if it has changed, lets set it
             if (old_route is None or (old_route is not None and old_route.route != tuple(raw_route))):
                 new_route = self.graph.add_route(
                     (self.local_peer.addr, port),
@@ -169,4 +173,4 @@ class DNMSAgent(object):
                     raw_route,
                 )
                 peer.set_route(port, new_route)
-            yield tornado.gen.sleep(1)
+            yield tornado.gen.sleep(5)

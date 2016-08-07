@@ -47,6 +47,8 @@ class PongServer(object):
             self.io_loop.remove_handler(fd)
             sock.close()
 
+    # TODO: handle the message and return an ACK msg
+    # TODO: piggyback some route info? (similar to gossip messages)
     def _on_recive(self, sock, data, src_address):
         print 'Server got:', (src_address, data)
         sock.sendto(data, src_address)
