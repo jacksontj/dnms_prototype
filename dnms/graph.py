@@ -20,6 +20,9 @@ class Link(object):
     def __repr__(self):
         return pprint.pformat(vars(self))
 
+# TODO: RoundTripRoute? Right now the Route is a single direction since we only
+# have one side of the traceroute. If the peers gossip about the reverse routes
+# then we could potentially have both directions
 # TODO: TTL for routes? If we just start up we don't want to have to re-ping the
 # world before we are useful
 class Route(object):
